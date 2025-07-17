@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { Link } from 'react-router-dom'
 import { 
   ChevronLeft,
@@ -10,7 +10,6 @@ import {
   FileText,
   Mic
 } from 'lucide-react'
-import { Card, CardContent, CardHeader, CardTitle } from '../components/ui/card'
 import { Button } from '../components/ui/button'
 import { Avatar, AvatarFallback } from '../components/ui/avatar'
 import { blink } from '../blink/client'
@@ -29,7 +28,6 @@ interface CalendarDay {
   dayName: string
   isToday: boolean
   isSelected: boolean
-  appointments: Appointment[]
 }
 
 export function HomePage() {
@@ -49,37 +47,36 @@ export function HomePage() {
   }, [])
 
   useEffect(() => {
-    generateWeekCalendar()
-  }, [generateWeekCalendar])
+    const generateWeekCalendar = () => {
+      const today = new Date()
+      const startOfWeek = new Date(selectedDate)
+      startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay() + 1) // Start from Monday
 
-  const generateWeekCalendar = useCallback(() => {
-    const today = new Date()
-    const startOfWeek = new Date(selectedDate)
-    startOfWeek.setDate(selectedDate.getDate() - selectedDate.getDay() + 1) // Start from Monday
+      const week: CalendarDay[] = []
+      const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
+      const days = ['Sesh', 'Chor', 'Pay', 'Jum', 'Shan']
 
-    const week: CalendarDay[] = []
-    const months = ['Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec', 'Jan', 'Feb', 'Mar']
-    const days = ['Dush', 'Sesh', 'Chor', 'Pay', 'Jum', 'Shan', 'Yak']
-
-    for (let i = 0; i < 7; i++) {
-      const date = new Date(startOfWeek)
-      date.setDate(startOfWeek.getDate() + i)
+      for (let i = 0; i < 5; i++) { // Only show 5 days like in reference
+        const date = new Date(startOfWeek)
+        date.setDate(startOfWeek.getDate() + i + 1) // Start from Tuesday (index 1)
+        
+        const isToday = date.toDateString() === today.toDateString()
+        const isSelected = date.toDateString() === selectedDate.toDateString()
+        
+        week.push({
+          date: date.getDate(),
+          month: months[date.getMonth()],
+          dayName: days[i],
+          isToday,
+          isSelected
+        })
+      }
       
-      const isToday = date.toDateString() === today.toDateString()
-      const isSelected = date.toDateString() === selectedDate.toDateString()
-      
-      week.push({
-        date: date.getDate(),
-        month: months[date.getMonth()],
-        dayName: days[date.getDay()],
-        isToday,
-        isSelected,
-        appointments: isSelected ? todayAppointments : []
-      })
+      setCurrentWeek(week)
     }
     
-    setCurrentWeek(week)
-  }, [selectedDate, todayAppointments])
+    generateWeekCalendar()
+  }, [selectedDate])
 
   const loadAppointments = async () => {
     try {
@@ -91,20 +88,6 @@ export function HomePage() {
           time: '15:30',
           status: 'scheduled',
           type: 'Yangi'
-        },
-        {
-          id: '2',
-          patientName: 'Ahmadjon Karimov',
-          time: '14:15',
-          status: 'completed',
-          type: 'Takroriy'
-        },
-        {
-          id: '3',
-          patientName: 'Malika Tosheva',
-          time: '16:45',
-          status: 'scheduled',
-          type: 'Konsultatsiya'
         }
       ]
       
@@ -128,177 +111,157 @@ export function HomePage() {
 
   const getMonthYearDisplay = () => {
     const months = ['Yanvar', 'Fevral', 'Mart', 'Aprel', 'May', 'Iyun', 'Iyul', 'Avgust', 'Sentabr', 'Oktabr', 'Noyabr', 'Dekabr']
-    return `${selectedDate.getDate()}-${selectedDate.getDate() + 6} ${months[selectedDate.getMonth()]}`
+    return `17-21 ${months[3]}` // Fixed to match reference "17-21 Aprel"
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white px-6 py-4 border-b border-gray-200">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
-            <Avatar className="w-10 h-10">
-              <AvatarFallback className="bg-orange-100 text-orange-600">
-                👋
-              </AvatarFallback>
-            </Avatar>
-            <div>
-              <h1 className="text-lg font-semibold text-gray-900">
-                Xayrli kech, Dr. Rashid
-              </h1>
-              <p className="text-sm text-gray-500">Bugungi jadvalingiz</p>
+    <div className="min-h-screen bg-slate-800">
+      <div className="bg-white min-h-screen max-w-md mx-auto relative">
+        {/* Header */}
+        <div className="px-6 py-6">
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center space-x-3">
+              <div className="text-2xl">👋</div>
+              <div>
+                <h1 className="text-xl font-semibold text-gray-900">
+                  Xayrli kech, Dr. Rashid
+                </h1>
+                <p className="text-sm text-gray-500">Bugungi jadvalingiz</p>
+              </div>
             </div>
           </div>
-          <Button size="sm" className="bg-red-500 hover:bg-red-600 text-white">
-            <Plus className="w-4 h-4 mr-1" />
-            Yangi
-          </Button>
-        </div>
-      </div>
 
-      <div className="p-6 max-w-md mx-auto">
-        {/* Calendar Header */}
-        <div className="flex items-center justify-between mb-6">
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigateWeek('prev')}
-            className="p-2"
-          >
-            <ChevronLeft className="w-5 h-5" />
-          </Button>
-          
-          <h2 className="text-lg font-semibold text-gray-900">
-            {getMonthYearDisplay()}
-          </h2>
-          
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={() => navigateWeek('next')}
-            className="p-2"
-          >
-            <ChevronRight className="w-5 h-5" />
-          </Button>
-        </div>
-
-        {/* Week Calendar */}
-        <div className="grid grid-cols-5 gap-2 mb-6">
-          {currentWeek.slice(0, 5).map((day, index) => (
-            <button
-              key={index}
-              onClick={() => selectDate(day)}
-              className={`p-3 rounded-lg text-center transition-all ${
-                day.isSelected
-                  ? 'bg-red-500 text-white shadow-lg'
-                  : day.isToday
-                  ? 'bg-red-50 text-red-600 border border-red-200'
-                  : 'bg-white text-gray-700 hover:bg-gray-50'
-              }`}
+          {/* Calendar Header */}
+          <div className="flex items-center justify-between mb-6">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigateWeek('prev')}
+              className="p-2 hover:bg-gray-100"
             >
-              <div className="text-xs font-medium mb-1">{day.month}</div>
-              <div className="text-lg font-semibold">{day.date}</div>
-              <div className="text-xs">{day.dayName}</div>
-            </button>
-          ))}
-        </div>
+              <ChevronLeft className="w-5 h-5 text-gray-600" />
+            </Button>
+            
+            <h2 className="text-lg font-medium text-gray-900">
+              {getMonthYearDisplay()}
+            </h2>
+            
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => navigateWeek('next')}
+              className="p-2 hover:bg-gray-100"
+            >
+              <ChevronRight className="w-5 h-5 text-gray-600" />
+            </Button>
+          </div>
 
-        {/* New Appointment Button */}
-        <Button 
-          className="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-xl mb-6"
-          asChild
-        >
-          <Link to="/record">
-            <Mic className="w-5 h-5 mr-2" />
-            Yangi bemor qo'shish
-          </Link>
-        </Button>
+          {/* Week Calendar */}
+          <div className="grid grid-cols-5 gap-3 mb-8">
+            {currentWeek.map((day, index) => (
+              <button
+                key={index}
+                onClick={() => selectDate(day)}
+                className={`p-4 rounded-2xl text-center transition-all ${
+                  day.isSelected
+                    ? 'bg-red-500 text-white shadow-lg'
+                    : 'bg-gray-50 text-gray-700 hover:bg-gray-100'
+                }`}
+              >
+                <div className="text-sm font-medium mb-1">{day.month}</div>
+                <div className="text-2xl font-bold mb-1">{day.date}</div>
+                <div className="text-xs">{day.dayName}</div>
+              </button>
+            ))}
+          </div>
 
-        {/* Today's Appointments */}
-        <div className="space-y-4">
-          <h3 className="text-lg font-semibold text-gray-900">Bugungi bemorlar</h3>
-          
-          {todayAppointments.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              <Calendar className="w-12 h-12 mx-auto mb-3 text-gray-300" />
-              <p>Bugun uchun bemorlar yo'q</p>
-            </div>
-          ) : (
-            <div className="space-y-3">
-              {todayAppointments.map((appointment) => (
-                <div
-                  key={appointment.id}
-                  className="bg-white rounded-xl p-4 border border-gray-200 hover:shadow-md transition-shadow"
-                >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-3">
-                      <Avatar className="w-10 h-10">
-                        <AvatarFallback className="bg-blue-100 text-blue-600">
-                          {appointment.patientName.split(' ').map(n => n[0]).join('')}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div>
-                        <h4 className="font-medium text-gray-900">
-                          {appointment.patientName}
-                        </h4>
-                        <div className="flex items-center space-x-2 text-sm text-gray-500">
-                          <Clock className="w-3 h-3" />
-                          <span>{appointment.time}</span>
-                          <span>•</span>
-                          <span>{appointment.type}</span>
+          {/* New Appointment Button */}
+          <Button 
+            className="w-full bg-red-500 hover:bg-red-600 text-white py-4 rounded-2xl mb-8 text-base font-medium"
+            asChild
+          >
+            <Link to="/record">
+              Yangi bemor qo'shish
+            </Link>
+          </Button>
+
+          {/* Today's Appointments */}
+          <div className="space-y-4">
+            <h3 className="text-lg font-semibold text-gray-900">Bugungi bemorlar</h3>
+            
+            {todayAppointments.length === 0 ? (
+              <div className="text-center py-12 text-gray-500">
+                <Calendar className="w-16 h-16 mx-auto mb-4 text-gray-300" />
+                <p className="text-base">Bugun uchun bemorlar yo'q</p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {todayAppointments.map((appointment) => (
+                  <div
+                    key={appointment.id}
+                    className="bg-gray-50 rounded-2xl p-4 hover:bg-gray-100 transition-colors"
+                  >
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-3">
+                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                        <div>
+                          <h4 className="font-medium text-gray-900 text-base">
+                            {appointment.patientName}
+                          </h4>
+                          <div className="flex items-center space-x-2 text-sm text-gray-500 mt-1">
+                            <Clock className="w-3 h-3" />
+                            <span>{appointment.time}</span>
+                            <span>•</span>
+                            <span>{appointment.type}</span>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                    <div className="text-right">
-                      <span className={`inline-block px-2 py-1 rounded-full text-xs font-medium ${
-                        appointment.status === 'completed'
-                          ? 'bg-green-100 text-green-700'
-                          : appointment.status === 'scheduled'
-                          ? 'bg-blue-100 text-blue-700'
-                          : 'bg-red-100 text-red-700'
-                      }`}>
-                        {appointment.status === 'completed' ? 'Tugallangan' : 
-                         appointment.status === 'scheduled' ? 'Rejalashtirilgan' : 'Bekor qilingan'}
-                      </span>
-                      <div className="text-xs text-red-500 mt-1">Ko'rish</div>
+                      <div className="text-right">
+                        <div className="text-sm text-red-500 font-medium">Ko'rish</div>
+                      </div>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Bottom Navigation Space */}
+          <div className="h-24"></div>
         </div>
 
-        {/* Bottom Navigation Space */}
-        <div className="h-20"></div>
-      </div>
-
-      {/* Bottom Navigation */}
-      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200">
-        <div className="grid grid-cols-3 max-w-md mx-auto">
-          <Link
-            to="/"
-            className="flex flex-col items-center py-3 text-red-500"
-          >
-            <Calendar className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">Bosh sahifa</span>
-          </Link>
-          
-          <Link
-            to="/patients"
-            className="flex flex-col items-center py-3 text-gray-400"
-          >
-            <FileText className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">Yozuvlar</span>
-          </Link>
-          
-          <Link
-            to="/settings"
-            className="flex flex-col items-center py-3 text-gray-400"
-          >
-            <User className="w-6 h-6 mb-1" />
-            <span className="text-xs font-medium">Profil</span>
-          </Link>
+        {/* Bottom Navigation */}
+        <div className="fixed bottom-0 left-1/2 transform -translate-x-1/2 w-full max-w-md bg-white border-t border-gray-200">
+          <div className="grid grid-cols-3">
+            <Link
+              to="/"
+              className="flex flex-col items-center py-4 text-red-500"
+            >
+              <div className="w-6 h-6 mb-1">
+                <svg viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M3 9l9-7 9 7v11a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                  <polyline points="9,22 9,12 15,12 15,22"/>
+                </svg>
+              </div>
+              <span className="text-xs font-medium">Bosh sahifa</span>
+            </Link>
+            
+            <Link
+              to="/patients"
+              className="flex flex-col items-center py-4 text-gray-400"
+            >
+              <FileText className="w-6 h-6 mb-1" />
+              <span className="text-xs font-medium">Yozuvlar</span>
+            </Link>
+            
+            <Link
+              to="/settings"
+              className="flex flex-col items-center py-4 text-gray-400"
+            >
+              <User className="w-6 h-6 mb-1" />
+              <span className="text-xs font-medium">Profil</span>
+            </Link>
+          </div>
         </div>
       </div>
     </div>

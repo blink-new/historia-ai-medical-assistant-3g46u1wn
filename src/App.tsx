@@ -5,7 +5,6 @@ import { Toaster } from './components/ui/toaster'
 
 // Components
 import { LoadingScreen } from './components/LoadingScreen'
-import { Layout } from './components/Layout'
 import { HomePage } from './pages/HomePage'
 import { VoiceRecordingPage } from './pages/VoiceRecordingPage'
 import { PatientsPage } from './pages/PatientsPage'
@@ -47,16 +46,14 @@ function App() {
 
   return (
     <Router>
-      <Layout>
-        <Routes>
-          <Route path="/" element={<HomePage />} />
-          <Route path="/record" element={<VoiceRecordingPage />} />
-          <Route path="/patients" element={<PatientsPage />} />
-          <Route path="/templates" element={<TemplatesPage />} />
-          <Route path="/settings" element={<SettingsPage />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </Layout>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/record" element={<VoiceRecordingPage />} />
+        <Route path="/patients" element={<PatientsPage />} />
+        <Route path="/templates" element={<TemplatesPage />} />
+        <Route path="/settings" element={<SettingsPage />} />
+        <Route path="*" element={<Navigate to="/" replace />} />
+      </Routes>
       <Toaster />
     </Router>
   )
